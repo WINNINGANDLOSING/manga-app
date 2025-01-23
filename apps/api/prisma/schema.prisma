@@ -1,0 +1,174 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model comments {
+  id       Int    @id @default(autoincrement())
+  authorId Int?
+  postId   Int?
+  title    String
+  users    users? @relation(fields: [authorId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "comments_authorId_users_id_fk")
+  posts    posts? @relation(fields: [postId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "comments_postId_posts_id_fk")
+}
+
+model groups {
+  id            Int             @id @default(autoincrement())
+  name          String
+  usersToGroups usersToGroups[]
+}
+
+model posts {
+  id       Int        @id @default(autoincrement())
+  title    String
+  content  String
+  authorId Int?
+  comments comments[]
+  users    users?     @relation(fields: [authorId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "posts_authorId_users_id_fk")
+}
+
+model profileInfo {
+  id       Int    @id @default(autoincrement())
+  metadata Json?
+  userId   Int?   @default(autoincrement())
+  users    users? @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "profileInfo_userId_users_id_fk")
+}
+
+model users {
+  id                 Int             @id @default(autoincrement())
+  name               String
+  email              String          @unique
+  password           String
+  hashedRefreshToken String?
+  role               Role            @default(USER)
+  comments           comments[]
+  posts              posts[]
+  profileInfo        profileInfo[]
+  usersToGroups      usersToGroups[]
+}
+
+model usersToGroups {
+  userId  Int
+  groupId Int
+  groups  groups @relation(fields: [groupId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "usersToGroups_groupId_groups_id_fk")
+  users   users  @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "usersToGroups_userId_users_id_fk")
+
+  @@id([groupId, userId], map: "usersToGroups_groupId_userId_pk")
+  @@index([userId], map: "userId")
+}
+
+model chapters {
+  id             Int       @id @default(autoincrement())
+  manga_id       Int
+  chapter_number Decimal?  @db.Decimal
+  uploaded_date  DateTime? @default(now()) @db.Timestamp(6)
+  chapter_name   String?
+  mangas         mangas    @relation(fields: [manga_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  pages          pages[]
+}
+
+model mangas {
+  id                 Int             @id @default(autoincrement())
+  title              String          @db.VarChar(255)
+  description        String?
+  genres             String[]
+  cover_image_url    String          @default("BLANK")
+  view_counts        Int?            @default(0)
+  status             String          @default("Ongoing") @db.VarChar(50)
+  created_at         DateTime?       @default(now()) @db.Timestamp(6)
+  alternative_titles String[]
+  last_updated       DateTime?       @default(now()) @db.Timestamp(6)
+  chapters           chapters[]
+  manga_creator      manga_creator[]
+  manga_tag          manga_tag[]
+}
+
+model pages {
+  id          Int      @id @default(autoincrement())
+  chapter_id  Int
+  page_number Int
+  image_url   String
+  chapters    chapters @relation(fields: [chapter_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([chapter_id, page_number], map: "unique_chapter_page")
+}
+
+model tags {
+  id          Int         @id @default(autoincrement())
+  name        String      @unique @db.VarChar(255)
+  tag_type    String?     @db.VarChar(255)
+  description String?     @db.VarChar(255)
+  manga_tag   manga_tag[]
+}
+
+model creators {
+  id            Int             @id @default(autoincrement())
+  name          String          @db.VarChar(255)
+  bio           String?         @default("")
+  created_at    DateTime?       @default(now()) @db.Timestamp(6)
+  manga_creator manga_creator[]
+}
+
+model manga_creator {
+  id         Int       @id @default(autoincrement())
+  manga_id   Int?
+  creator_id Int?
+  role       String?   @db.VarChar(50)
+  creators   creators? @relation(fields: [creator_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  mangas     mangas?   @relation(fields: [manga_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model manga_tag {
+  id       Int     @id @default(autoincrement())
+  manga_id Int?
+  tag_id   Int?
+  mangas   mangas? @relation(fields: [manga_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tags     tags?   @relation(fields: [tag_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+enum Role {
+  ADMIN
+  EDITOR
+  USER
+}
+
+enum comic_origin {
+  manga
+  manhua
+  manhwa
+  webtoons
+  comics
+}
+
+enum comic_tag_type {
+  format
+  content_rating @map("content-rating")
+  genres
+  themes
+}
+
+enum content_rating {
+  safe
+  suggestive
+  ecchi
+  nsfw
+}
+
+enum n_tag_type {
+  format
+  origin
+  content_rating @map("content-rating")
+  genres
+  themes
+}
+
+enum tag_type {
+  format
+  content_rating @map("content-rating")
+  genres
+  themes
+}

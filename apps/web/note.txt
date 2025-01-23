@@ -1,0 +1,374 @@
+to install shadcn/ui,
+in root folder "Nest-Next-Authentication", run "npx shadcn@latest init"
+then cd to apps/web, run "npx shadcn@latest add button"
+
+remember: fetch() returns a Response object, which represents the response to the request. This object contains the status, headers, and body of the response.
+The body of the response is typically in the form of a stream, and you need to call the .json() method to parse it as JSON. 
+To correctly parse the response and get the JSON data, you need to await the query.json() promise, Without await, response will be a promise and not the actual data.
+
+
+1. To Call Api to display all data of the database:
+    const query = await fetch(`http://localhost:7000/manga/${manga_id}`);
+    const response = await query.json();
+
+
+2. To Call Api to create a new chapter, remember to set decorator @Public() on this api route and set await on query.json() because it's async
+    const query = await fetch(
+        `http://localhost:7000/manga/createNewChapter`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json", // Set Content-Type to application/json
+          },
+          body: JSON.stringify({
+            mangaId: manga_id,
+            chapterNumber: chapter_number,
+          }),
+        }
+      );
+    
+    const response = await query.json();
+
+3. chapter_number type should be numeric in neon tech
+
+ async createNewChapter(createChapterDto: CreateChapterDto) {
+    const { mangaId, chapterNumber } = createChapterDto;
+    try {
+      // Auto-generate the chapter number if not provided or invalid
+      const lastChapter = await this.prisma.chapters.findFirst({
+        where: { manga_id: mangaId },
+        orderBy: { chapter_number: 'desc' },
+      });
+
+      const newChapterNumber = chapterNumber
+        ? chapterNumber
+        : lastChapter
+          ? lastChapter.chapter_number + 1
+          : 1;
+
+      console.log('new chapter', newChapterNumber);
+
+      return await this.prisma.chapters.create({
+        data: {
+          manga_id: mangaId,
+          chapter_number: newChapterNumber,
+        },
+      });
+    } catch (error) {
+      console.error('Error creating new chapter: ', error);
+      throw new Error('Failed to create new chapter');
+    }
+  }
+
+4. 
+In React with Next.js, marking the top-level component function as async implies it’s designed to run as a Server Component. 
+This is because Server Components can handle asynchronous operations (e.g., fetching data) directly on the server.
+So we cannot do this:
+export default async function Page({
+)}
+and use hooks like useState etc
+
+5. 
+In addition, cannot  use cloudinary in a client component because 
+"The error occurs because the cloudinary library you are using tries to access Node.js modules like fs, which are not available in the browser environment. This happens even if you’re not on the specific page that uses cloudinary, because Next.js attempts to precompile or bundle all imports, including cloudinary.
+
+Why It Happens:
+Cloudinary SDK: The cloudinary package is designed primarily for Node.js and relies on server-side modules like fs.
+Client Component: Since you marked your file with "use client";, Next.js is treating it as a Client Component, and it cannot handle server-only modules like fs."
+So we cannot do this:
+await cloudinary.v2.search() in a client component
+
+6. IMPORTANT!!!
+
+To fetch the api route from NestJS (from backend to frontend):
+const query = await fetch(url(8000), {
+  method:
+  headers:
+  body:
+})
+const response = query.json();
+
+To fetch the api route directly from NextJS (for instance: /web/api/cloudinary):
+const query = await fetch(url(3000), {
+  method:
+  headers:
+  body:
+})
+const response = query.json();
+
+7. IMPORTANT!!!
+Cannot directly use cloudinary api in a client component, so we must create an api file in /web/app/api
+First, get the manga_id passed from the client component to it,
+then use cloudinary api to fetch the bg cover,
+then return the secure_url of the bg cover
+Example, /web/app/api/cloudinary/fetchBgCover to fetch the Bg Cover from cloudinary based on the given 'manga_id':
+
+export async function POST(req: NextRequest, res: NextApiResponse) {
+  const body = await req.json(); 
+  const { manga_id } = body;
+  const result = await cloudinary.v2.search
+      .expression(`folder:${manga_id}/bg_cover AND resource_type:image`)
+      .max_results(2)
+      .execute();
+
+   
+
+    const bg_cover_url = result.resources.map((res: any) => res.secure_url); // Return the secure url using .map
+    return NextResponse.json({ data: bg_cover_url }, { status: 201 });
+}
+
+8. Using direct api from NextJs, let's say we have a variable 'pages', which is the return object of the api (it's an object containing resouces, inside resources containing many things) 
+from manga_id and chapter_id, now to display all the manga panels of this chapter we do (in any client component):
+{pages?.resources?.map((res: any) => (
+          <CloundinaryImage
+            key={res.public_id} // Unique key for each image
+            width="1000" // Fixed image width
+            height="700" // Fixed image height
+            src={res.public_id} // Source URL of the image
+            alt={`Chapter ${chapter_id}`} // Descriptive alt text for accessibility
+          />
+        ))}
+
+9. To Fetch all mangas from database with new methods
+  9.1 Create fetchData.js
+    export const fetchData = async () => {
+        const response = await fetch("http://localhost:8000/manga");
+        return response.json();
+    }
+  9.2 In ExportedData.js
+    export const AllManga = async () => {
+      try {
+        const data = await fetchData();
+        return data;
+      }
+      catch(err){
+        ...
+      }
+    }
+
+    If you want to create five random mangas from the manga db:
+      const data = await MangaList();
+      return getRandomItems(data, 5);
+    
+    To get the data in other files:
+    const data = await AllManga();
+    setMangas = data;
+
+  
+10. Tailwind trick, to have one div take 30% of width while the other takes 70%:
+  parent div: use flex
+  div 1: use 'w-1/4'
+  div 2: use 'w-3/4'
+  
+  or
+
+  parent div: use grid grid-cols-4
+  div 1: nothing
+  div 2: use 'col-span-3'
+
+11. pagination logic:
+  requirements:
+    currentPage, totalPages, mangasPerPage, firstMangaIndex, lastMangaIndex
+
+    -----
+    currentPage is the current page that being display, like 1, 2, 3, 4
+    totalPages is the number of total mangas divided by mangasPerPage (example: 30 (mangas) / 6 (mangasPerPage) = 5 totalPages)
+    firstMangaIndex is the index of the first manga of any page (let's say mangasPerPage is 6, if currentPage is 1, then it is 0, if currentPage is 2 then it is 6)
+    lastMangaIndex is the index of the last manga of any page (let's say mangasPerPage is 6, if currentPage is 1, then it is 5, if currentPage is 2 then it is 11)
+    firstMangaIndex is calculated by (lastMangaIndex - mangasPerPage, example: lastMangaIndex = 6 => firstMangaIndex = 0)
+    lastMangaIndex is calculated by (mangasPerPage * currentPage, example: currentPage = 1 => lastMangaIndex = 6)
+
+12. <table> structure:
+  <table>
+   <thead>
+    <tr>
+      <th> </th>
+    </tr>
+   </thead>
+
+   <tbody>
+    <tr>
+      <td> </td>
+    </tr>
+
+
+13. To have the <select> default color is grayish (before choosing any value) but will be white (or any ) when chosen:
+  <select
+    required
+    lassName="add-manga-default-form text-gray-400"
+    onChange={(e) => e.target.classList.remove("text-gray-400")}
+  >
+
+14. To make each div on the same line if they come from mapping (use inline-flex):
+{Object.map((tag: any, index: any) => (
+  <div
+    className=" inline-flex"
+    key={index}
+  >
+    {tag}
+  </div>
+  ))}
+
+15. !IMPORTANT
+Currently, there are two ways to safe guard api routes
+
+Method 1 (Super buggy but works with client component):
+  In module, do:
+    imports: [
+      JwtModule.registerAsync(jwtConfig.asProvider()),
+      ConfigModule.forFeature(jwtConfig),
+      ConfigModule.forFeature(refreshConfig),
+      ConfigModule.forFeature(googleOauthConfig),
+    ],
+  In controller, use Roles() to mark any api route that you want to protect:
+    auth.controller:
+      Roles('ADMIN', 'EDITOR') // Only admin and editors can access this api
+      @Get('protected')
+      getAll(@Request() req) {
+        return {
+        message: `Now you are able to access this protected API. This is your User ID ${req.user.id}`,
+        };
+      }
+    The protected api route is: /auth/protected
+  In lib/actions.ts:
+  use authFetch() like this:
+  const getProfile = async() => {
+    const response = await authFetch(`${BACKEND_URL}/auth/protected`); // sent to the protected api, which has the required roles admin and editor only
+    const result = await response.json();
+    return result;
+    }
+
+  Now in /profile, call: const res = await getProfile();
+    
+    
+
+Method 2 (Simpler, server component: instant redirecting; client component: flashing page):
+  In lib/actions.ts:
+  export const checking = async() => {
+    const session = await getSession();
+    if (!session || !session.user) redirect("/auth/signin");
+    if (session.user.role !== Role.ADMIN) redirect("/auth/signin");
+  }
+
+  IN any file:
+    do: const checkingSession = await checking();
+
+Method 3 (using middleware):
+  In middleware, add any page to 
+    export const config = {
+    matcher: ["/profile", "/admin-interface"],
+    };
+    
+16. The reason if not logged in and visiting /profile will redirect immediately /auth/signin is due to middleware
+
+17. Prepare, when moving on to adding new manga, use validationFields
+
+18. Very good code, a dropdown menu that allows user to search in the existing data by typing, for example, typing A will display only results starting with "A"
+
+ <div className="relative flex  w-full border-[1px] ">
+               
+                <input
+                  type="text"
+                  id="author-search"
+                  name="author-search"
+                  placeholder="Search authors..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className=" w-full outline-none p-3 bg-gray-800 text-white"
+                  ref={inputRef}
+                  onFocus={handleFocus} // Set input focus state
+                  onBlur={handleBlur} // Set input blur state
+                />
+
+                <div
+                  ref={dropdownRef}
+                  className={`absolute left-0 right-0 top-full mt-1 bg-gray-800 shadow-lg rounded-sm border border-gray-200 z-10 ${isFocused && searchQuery ? "block" : "hidden"}`}
+                >
+                  {filteredAuthors.length === 0 && searchQuery && (
+                    <div className="text-gray-500 p-2">No authors found</div>
+                  )}
+
+                  <div className="max-h-[8vw] overflow-y-auto">
+                    {filteredAuthors.map((author) => (
+                      <div
+                        key={author.id}
+                        className="author-item px-4 py-2 cursor-pointer hover:bg-gray-100 hover:text-black"
+                      >
+                        {author.name}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+19. To display text with proper lines, use whitespace-pre-line
+
+20. Add one custom item to the list
+const filteredAuthors = [
+  ...fetchedDataCreators.filter((creator) =>
+    creator.name.toLowerCase().startsWith(searchQueryAu.toLowerCase())
+  ),
+  { name: "Add Author +", id: "add-author" },
+];
+
+21.
+3 ways to update a value in a list:
+1.
+const updatedField = [...List];
+updatedField[index] = value
+setList(updatedField)
+or you can
+const updatedField = [...List, {"name": ''}]
+setList(updatedField)
+
+2.
+setList((prevState) => ({
+  ...prevState
+  [key]: prevState[key] + value,
+
+}))
+
+3.
+setList((prevState) => {
+  if(condition){
+    return [...prevState, newItem]
+  }
+  return prevState
+})
+
+22. nice trick to ensure currentPage don't go exceed a certain number: setCurrentPage(Math.min(currentPage + 1, certain_number));
+
+ const validatePageThree = () => {
+      updateErrorList(
+        "selected-content-rating",
+        selectedContentRating === ""
+          ? "You have not chosen any tag belong to Category 'Content Rating'"
+          : null
+      );
+      updateErrorList(
+        "selected-origin",
+        selectedOrigin === ""
+          ? "You have not chosen any tag belong to Category 'Origin'"
+          : null
+      );
+      updateErrorList(
+        "selected-formats",
+        selectedFormats.length === 0
+          ? "Please choose at least one tag belong to Category 'Format'"
+          : null
+      );
+
+      updateErrorList(
+        "selected-genres",
+        selectedGenres.length === 0
+          ? "Please choose at least one tag belong to Category 'Genre'"
+          : null
+      );
+
+      updateErrorList(
+        "selected-themes",
+        selectedThemes.length === 0
+          ? "Please choose at least one tag belong to Category 'Theme'"
+          : null
+      );
+    };

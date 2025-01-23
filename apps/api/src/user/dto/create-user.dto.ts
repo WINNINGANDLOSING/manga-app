@@ -1,0 +1,14 @@
+import { IsEmail, IsOptional, IsString, IsUrl, IsUUID } from 'class-validator';
+
+export class CreateUserDto {
+  @IsString()
+  name: string;
+
+ 
+  @IsString()
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  password: string;
+}

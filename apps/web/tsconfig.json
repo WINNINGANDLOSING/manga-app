@@ -1,0 +1,28 @@
+{
+  "extends": "@repo/typescript-config/nextjs.json",
+  "compilerOptions": {
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"],
+      "FontAwesomeIcon": ["node_modules/@fortawesome/react-fontawesome"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "next.config.mjs",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "context/context.js",
+    "components/trending/page.tsx",
+    "components/createNewChapter/page.jsx",
+    "public/data/ExportedData.js",
+    "components/sidebar/page.jsx"
+, "app/testingRun/seeCreators/page.jsx", "components/createNewManga/page.tsx", "components/createNewManga/CreateNewSynopsisModal.jsx", "components/createNewManga/CreateNewAuthors.jsx"  ],
+  "exclude": ["node_modules"]
+}
