@@ -1,6 +1,7 @@
 import {
   IsArray,
   IsInt,
+  IsNumber,
   IsOptional,
   IsString,
   IsUrl,
@@ -16,29 +17,50 @@ export class CreateMangaDto {
   @IsString()
   description?: string;
 
-  
+  @IsArray()
+  @IsString({ each: true }) // Ensures each element in the array is a string
+  authors?: string[];
+
+  @IsArray()
+  @IsString({ each: true }) // Ensures each element in the array is a string
+  artists?: string[];
+
+  @IsString()
+  content_rating?: string;
+
+  @IsString()
+  originalLanguage?: string;
+
+  @IsNumber()
+  releaseYear?: number;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  formats?: string[];
+
+  @IsString()
+  origin?: string;
 
   // @IsOptional()
   @IsArray()
   @IsString({ each: true }) // Ensures each element in the array is a string
   genres?: string[];
 
+  // @IsOptional()
+  @IsArray()
+  @IsString({ each: true }) // Ensures each element in the array is a string
+  themes?: string[];
+
   @IsOptional()
   @IsString()
   cover_image_url?: string;
 
-  @IsOptional()
-  @IsInt()
-  @Min(0) 
-  view_counts?: number;
-
-  
   @IsString()
-  status?: string; 
+  status?: string;
 
   @IsOptional()
   @IsArray()
-  @IsString({each: true})
-  alternative_titles?: string[]
-  
+  @IsString({ each: true })
+  alternative_titles?: string[];
 }

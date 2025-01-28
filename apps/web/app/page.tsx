@@ -22,8 +22,8 @@ export default async function Home() {
 
   // bg-gray-200
   return (
-    <div className="flex flex-col px-[11vw] h-screen bg-black ">
-      <div className="mt-5 text-orange-500 text-2xl flex flex-col bg-black h-screen rounded-sm px-5 py-3">
+    <div className="flex flex-col px-[11vw] min-h-screen bg-gray-200 ">
+      <div className="mt-5 text-orange-500 text-2xl flex flex-col bg-gray-300 min-h-screen rounded-sm px-5 py-3">
         <div className="mb-6 flex flex-col h-fit">
           <div className="flex items-center space-x-2">
             <FontAwesomeIcon icon={faFire} style={{ color: "#f97316" }} />
@@ -34,7 +34,7 @@ export default async function Home() {
         </div>
         <div className="flex gap-5 w-full">
           <div className="mb-6 flex flex-col">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 ">
               <FontAwesomeIcon
                 icon={faClockRotateLeft}
                 style={{ color: "#f97316" }}

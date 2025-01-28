@@ -7,14 +7,17 @@ type SearchResult = {
 };
 export async function POST(req: NextRequest, res: NextApiResponse) {
   const body = await req.json(); // req.body;
+  // body: JSON.stringify({ manga_id, chapter_id }),
+
   const { manga_id, chapter_id } = body;
-  console.log("YES POST");
+
   try {
     const results = await cloudinary.v2.search
       .expression(`folder:${manga_id}/Ch${chapter_id} AND resource_type:image`)
       .sort_by("display_name", "asc")
-      .max_results(50)
+      .max_results(200)
       .execute();
+    // .max_results(50)
 
     // res.status(200).json(results.resources);
 

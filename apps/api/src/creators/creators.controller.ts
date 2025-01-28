@@ -19,18 +19,19 @@ export class CreatorsController {
     return this.creatorsService.findAll();
   }
 
+  @Public()
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  async findOne(@Param('id') id: string) {
     return this.creatorsService.findOne(+id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCreatorDto: UpdateCreatorDto) {
-    return this.creatorsService.update(+id, updateCreatorDto);
-  }
+  // @Patch(':id')
+  // update(@Param('id') id: string, @Body() updateCreatorDto: UpdateCreatorDto) {
+  //   return this.creatorsService.update(+id, updateCreatorDto);
+  // }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.creatorsService.remove(+id);
-  }
+  // @Delete(':id')
+  // remove(@Param('id') id: string) {
+  //   return this.creatorsService.remove(+id);
+  // }
 }

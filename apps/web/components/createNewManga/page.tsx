@@ -10,15 +10,56 @@ import {
   faCircleXmark,
 } from "@fortawesome/free-solid-svg-icons";
 
-import { getAllTags, getAllCreators } from "@/lib/actions";
+import {
+  getAllTags,
+  getAllCreators,
+  addNewManga,
+  getAllManga,
+} from "@/lib/actions";
 import { useFormStatus } from "react-dom";
 import CreateNewSynopsisModal from "./CreateNewSynopsisModal";
 import CreateNewAlternativeTitlesModal from "./CreateNewAlternativeTitles";
 import CreateNewAuthors from "./CreateNewAuthors";
+import CreateNewArtists from "./CreateNewArtists";
+
+import { setupDevBundler } from "next/dist/server/lib/router-utils/setup-dev-bundler";
+interface Manga {
+  id: number;
+  title: string;
+  description: string;
+  cover_image_url: string;
+  view_counts: number;
+  // Include other fields as needed
+}
+
 const CreateMangaModal = () => {
   // const { pending } = useFormStatus();
+  // Fetching All Mangas first
+  const [allMangas, setAllMangas] = useState<Manga[] | null>(null);
+  const [lastMangaIndex, setLastMangaIndex] = useState<number>(0);
+  useEffect(() => {
+    const fetchingManga = async () => {
+      const data = await getAllManga();
+      setAllMangas(data);
+    };
+    fetchingManga();
+  }, []);
+  useEffect(() => {
+    if (allMangas && allMangas !== null) {
+      const lastIndex = 10000 + allMangas.length;
+      setLastMangaIndex(lastIndex);
+    }
+  }, [allMangas]);
 
+  useEffect(() => {
+    if (lastMangaIndex && lastMangaIndex !== 0) {
+      console.log("last index", lastMangaIndex);
+    }
+  }, [lastMangaIndex]);
   // Linh Tinh
+  const refreshPage = () => {
+    window.location.reload();
+  };
   const [allTags, setAllTags] = useState<string[]>([]);
   const [tagsByContentRating, setTagsByContentRating] = useState<string[]>([]);
   const [tagsByOrigin, setTagsByOrigin] = useState<string[]>([]);
@@ -26,15 +67,85 @@ const CreateMangaModal = () => {
   const [tagsByGenres, setTagsByGenres] = useState<string[]>([]);
   const [tagsByThemes, setTagsByThemes] = useState<string[]>([]);
 
-  const [currentPage, setCurrentPage] = useState(3);
+  const [currentPage, setCurrentPage] = useState(1);
   const totalPages = 4;
   const [errorList, setErrorList] = useState<string[]>([]);
+
+  // vars to keep track of uploading status:
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     console.log("error list");
     console.log(errorList);
   }, [errorList]);
-  const handleSetCurrentPage = (operator: string) => {
+
+  const handleAddingCoverImage = async (image: any) => {
+    try {
+      const formData = new FormData();
+      formData.append("file", image);
+      formData.append("upload_preset", "ml_default");
+      const folderName = `${lastMangaIndex + 1}/bg_cover`;
+      formData.append("folder", folderName);
+
+      const response = await axios.post(
+        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`, // Replace with your Cloudinary cloud name
+        formData
+      );
+      const uploadedImageUrl = response.data.secure_url;
+      console.log("Image uploaded successfully:", uploadedImageUrl);
+      return uploadedImageUrl;
+    } catch (err) {
+      console.log("ERROR UPLOADING IMAGE TO CLOUDINARY");
+      return "BLANK";
+    }
+  };
+
+  const handleAddingNewManga = async (
+    title: string,
+    alternative_titles: string[],
+    description: string,
+    authors: string[],
+    artists: string[],
+    originalLanguage: string,
+    releaseYear: number,
+    content_rating: string,
+    origin: string,
+    formats: string[],
+    genres: string[],
+    themes: string[],
+    cover_image_url: string
+  ) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await addNewManga(
+        title,
+        alternative_titles,
+        description,
+        authors,
+        artists,
+        originalLanguage,
+        releaseYear,
+        content_rating,
+        origin,
+        formats,
+        genres,
+        themes,
+        cover_image_url
+      );
+      setSuccess(true);
+    } catch (err) {
+      console.error("Error", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Main Function responsible for conditon checkings and submitting data
+  const handleSetCurrentPage = async (operator: string) => {
     // Set list of errors
     const updateErrorList = (field: string, errorMessage: string | null) => {
       setErrorList((prevState) => {
@@ -132,24 +243,14 @@ const CreateMangaModal = () => {
     };
 
     const validatePageThree = () => {
-      updateErrorList(
-        "selected-content-rating",
-        selectedContentRating === ""
-          ? "You have not chosen any tag belong to Category 'Content Rating'"
-          : null
-      );
+      
       updateErrorList(
         "selected-origin",
-        selectedOrigin === ""
+        selectedOrigin === "DEFAULT"
           ? "You have not chosen any tag belong to Category 'Origin'"
           : null
       );
-      updateErrorList(
-        "selected-formats",
-        selectedFormats.length === 0
-          ? "Please choose at least one tag belong to Category 'Format'"
-          : null
-      );
+    
 
       updateErrorList(
         "selected-genres",
@@ -181,7 +282,7 @@ const CreateMangaModal = () => {
       coverImage &&
       coverImage !== null &&
       synopsis &&
-      synopsis !== null;
+      synopsis !== "";
     const isValidPageTwo =
       selectedAuthors.length > 0 &&
       selectedArtists.length > 0 &&
@@ -190,9 +291,7 @@ const CreateMangaModal = () => {
       releaseYear;
 
     const isValidPageThree =
-      selectedContentRating !== "" &&
       selectedOrigin !== "" &&
-      selectedFormats.length > 0 &&
       selectedGenres.length > 0 &&
       selectedThemes.length > 0;
 
@@ -206,7 +305,50 @@ const CreateMangaModal = () => {
               ? isValidPageThree
               : false;
       if (conditionsChecking) {
-        //setCurrentPage(Math.min(currentPage + 1, 4)); // Ensure that the currentPage does not exceed 4
+        setCurrentPage(Math.min(currentPage + 1, 3)); // Ensure that the currentPage does not exceed 4
+        if (currentPage === 3) {
+          setUploading(true);
+          try {
+            /* 
+            title: string,
+    alternative_titles: string[],
+    description: string,
+    authors: string[],
+    artists: string[],
+    originalLanguage: string,
+    releaseYear: number,
+    content_rating: string,
+    origin: string,
+    formats: string[],
+    genres: string[],
+    themes: string[],
+    cover_image_url: string
+            */
+            const bg_url = await handleAddingCoverImage(coverImage);
+            await handleAddingNewManga(
+              title,
+              alternateTitles,
+              synopsis,
+              selectedAuthors,
+              selectedArtists,
+              originalLan,
+              releaseYear,
+              contentRating,
+              selectedOrigin,
+              selectedFormats,
+              selectedGenres,
+              selectedThemes,
+              bg_url
+            );
+
+            alert("Images uploaded and chapter created successfully!");
+            refreshPage();
+          } catch (err) {
+            console.log("ERROR");
+          } finally {
+            setUploading(false);
+          }
+        }
       }
     } else {
       setErrorList([]);
@@ -293,24 +435,29 @@ const CreateMangaModal = () => {
   };
 
   const handleOnClickAddAuthors = (queryType: string, selectedItem: any) => {
-    console.log("Selected item:", selectedItem); // Log the selected author object
+    const authorName = selectedItem.name;
+    console.log("author name:", authorName); // Log the selected author object
     if (selectedItem.id === "add-author") {
       setIsOpenAddAuthors(true);
+      return;
+    }
+    if (selectedItem.id === "add-artist") {
+      setIsOpenAddArtists(true);
       return;
     }
     if (queryType === "Au") {
       setSearchQueryAu("");
       setSelectedAuthors((prevState) => {
-        if (!prevState.some((data) => data === selectedItem)) {
-          return [...prevState, selectedItem];
+        if (!prevState.some((data) => data === authorName)) {
+          return [...prevState, authorName];
         }
         return prevState;
       });
     } else {
       setSelectedArtists((prevState) => {
         setSearchQueryAr("");
-        if (!prevState.some((data) => data === selectedItem)) {
-          return [...prevState, selectedItem];
+        if (!prevState.some((data) => data === authorName)) {
+          return [...prevState, authorName];
         }
 
         return prevState;
@@ -346,9 +493,13 @@ const CreateMangaModal = () => {
   // Actual Form Data
   // Page 1
   const [title, setTitle] = useState<string>("");
-
+  useEffect(() => {
+    console.log("title", title);
+  }, [title]);
   const [alternateTitles, setAlternateTitles] = useState<string[]>([]);
-
+  useEffect(() => {
+    console.log("alternativeTitles", alternateTitles);
+  }, [alternateTitles]);
   const [isOpenModalTitles, setIsOpenModalTitles] = useState(false);
 
   const [coverImage, setCoverImage] = useState(null);
@@ -362,8 +513,10 @@ const CreateMangaModal = () => {
     setCoverImage(null);
   };
 
-  const [synopsis, setSynopsis] = useState(null);
-  const [synopsisError, setSynopsisError] = useState(false);
+  const [synopsis, setSynopsis] = useState("");
+  useEffect(() => {
+    console.log("synopsis", synopsis);
+  }, [synopsis]);
 
   const [isOpenModalSynopsis, setIsOpenModalSynopsis] = useState(false);
   const handleSetModal = () => {
@@ -383,10 +536,15 @@ const CreateMangaModal = () => {
 
   // Page 2
   const [selectedAuthors, setSelectedAuthors] = useState<any[]>([]);
+  useEffect(() => {
+    console.log("selectedAuthors", selectedAuthors);
+  }, [selectedAuthors]);
   const [newAuthors, setNewAuthors] = useState<any[]>([]); // used to add new authors if the list does not have
 
   const [selectedArtists, setSelectedArtists] = useState<any[]>([]);
-
+  useEffect(() => {
+    console.log("selectedArtists", selectedArtists);
+  }, [selectedArtists]);
   const [newArtists, setNewArtists] = useState<any[]>([]); // used to add new artists if the list does not have
 
   useEffect(() => {
@@ -417,11 +575,8 @@ const CreateMangaModal = () => {
   //   console.log(selectedAuthors);
   // }, [selectedAuthors]);
 
-  // Page 4
-  const [selectedContentRating, setSelectedContentRating] = useState("");
-  const handleSetSelectedCR = (tag: string) => {
-    setSelectedContentRating(selectedContentRating === tag ? "" : tag);
-  };
+  // Page 3
+  
 
   const [selectedOrigin, setSelectedOrigin] = useState("");
   const handleSetSelectedOrigin = (tag: string) => {
@@ -429,10 +584,12 @@ const CreateMangaModal = () => {
   };
 
   const [selectedFormats, setSelectedFormats] = useState<string[]>([]);
-
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
-
   const [selectedThemes, setSelectedThemes] = useState<string[]>([]);
+
+  // Select themes and genres, based on type, if 0 then themes, else then genres
+  // If the selected theme (or genre) already exist in the prevState, then filter it out
+  // Else, then add it in
   const handleSetSelectedFormat = (type: number, tag: string) => {
     if (type === 0) {
       setSelectedFormats((prevState: any) => {
@@ -485,8 +642,8 @@ const CreateMangaModal = () => {
               />
               <p className="text-sm font-normal text-gray-400 leading-[0.5px]">
                 It's recommended to use the{" "}
-                <span className="text-red-500">English title</span> for
-                consistency, especially for international audiences.
+                <span className="text-red-500">Original title</span> for
+                consistency.
               </p>
             </div>
             <div className="space-y-3 w-1/2">
@@ -593,7 +750,7 @@ const CreateMangaModal = () => {
               Synopsis&nbsp;
               <span className="text-pink-500">(Required)</span>
             </h2>
-            {!synopsis && (
+            {synopsis === "" && (
               <button
                 type="button"
                 className="border-[1px] min-h-[4rem] border-dashed space-x-1 text-gray-400 items-center justify-center flex w-full rounded-md"
@@ -603,13 +760,13 @@ const CreateMangaModal = () => {
                 <p className="text-2xl pb-1">+</p>
               </button>
             )}
-            {synopsis && (
+            {synopsis !== "" && (
               <div>
                 Your entered synopsis:{" "}
                 <button
                   type="button"
                   className="bg-gray-600 text-white text-[0.8rem] px-3 py-1 hover:scale-105 duration-200 ease-in-out transition-all ml-3 rounded-md   hover:ring-2 hover:ring-gray-500"
-                  onClick={() => setSynopsis(null)}
+                  onClick={() => setSynopsis("")}
                 >
                   Undo
                 </button>
@@ -687,12 +844,12 @@ const CreateMangaModal = () => {
               <div className="text-sm font-normal text-gray-400 space-x-3 leading-[0.5px]">
                 {selectedAuthors.length === 0
                   ? "Choose at least one author."
-                  : selectedAuthors.map((author: any, index) => (
+                  : selectedAuthors.map((author: any, index: any) => (
                       <p
                         key={index}
                         className="inline-flex  px-3 py-2 text-sm bg-gray-600 text-gray-300 rounded-md"
                       >
-                        {author.name}
+                        {author}
                       </p>
                     ))}
               </div>
@@ -727,26 +884,28 @@ const CreateMangaModal = () => {
                   onFocus={() => handleFocus("")}
                   onBlur={() => handleBlur("")}
                 />
-                {/* Custom Dropdown for Authors */}
+
                 <div
                   className={`absolute left-0 right-0 top-full mt-1 bg-gray-800 text-white border-gray-200 rounded-sm shadow-lg z-10 overflow-hidden ${searchQueryAr ? "block" : "hidden"} `}
                 >
                   <div className={`max-h-[7vw] overflow-y-auto`}>
                     {filteredArtists.length === 0 && (
-                      <div className="text-gray-500 p-2">No artists found</div>
+                      <div className="text-gray-500 p-2">No authors found</div>
                     )}
-                    {filteredArtists.map((artist) => (
-                      <div
-                        key={artist.id}
-                        className={`px-4 py-2 cursor-pointer hover:bg-gray-700 `}
-                        onClick={() => handleOnClickAddAuthors("Ar", artist)}
-                      >
-                        {artist.name}
-                      </div>
-                    ))}
+                    {searchQueryAr.length > 0 &&
+                      filteredArtists.map((author, index) => (
+                        <div
+                          key={index}
+                          className={`px-4 py-2 cursor-pointer hover:bg-gray-700 `}
+                          onClick={() => handleOnClickAddAuthors("Ar", author)}
+                        >
+                          {author.name}
+                        </div>
+                      ))}
                   </div>
                 </div>
               </div>
+
               <div className="text-sm font-normal text-gray-400 space-x-3 leading-[0.5px]">
                 {selectedArtists.length === 0
                   ? "Choose at least one artist."
@@ -755,10 +914,16 @@ const CreateMangaModal = () => {
                         key={index}
                         className="inline-flex  px-3 py-2 text-sm bg-gray-600 text-gray-300 rounded-md"
                       >
-                        {artist.name}
+                        {artist}
                       </p>
                     ))}
               </div>
+              {isOpenAddArtists && (
+                <CreateNewArtists
+                  setArtistsParent={setNewArtists}
+                  onClose={() => handleOnClose("add-artist")}
+                />
+              )}
             </div>
           </div>
 
@@ -827,34 +992,34 @@ const CreateMangaModal = () => {
                 >
                   Select Original Language
                 </option>
-                <option value="Japanese" className="bg-gray-800 text-white">
+                <option value="🇯🇵" className="bg-gray-800 text-white">
                   🇯🇵 Japanese
                 </option>
-                <option value="Korean" className="bg-gray-800 text-white">
+                <option value="🇰🇷" className="bg-gray-800 text-white">
                   🇰🇷 Korean
                 </option>
-                <option value="Thailand" className="bg-gray-800 text-white">
+                <option value="🇹🇭" className="bg-gray-800 text-white">
                   🇹🇭 Thailand
                 </option>
-                <option value="English" className="bg-gray-800 text-white">
-                  🇺🇸 English
+                <option value="🇬🇧" className="bg-gray-800 text-white">
+                  🇬🇧 English
                 </option>
-                <option value="Chinese" className="bg-gray-800 text-white">
+                <option value="🇨🇳" className="bg-gray-800 text-white">
                   🇨🇳 Chinese
                 </option>
-                <option value="French" className="bg-gray-800 text-white">
+                <option value="🇫🇷" className="bg-gray-800 text-white">
                   🇫🇷 French
                 </option>
-                <option value="Spanish" className="bg-gray-800 text-white">
+                <option value="🇪🇸" className="bg-gray-800 text-white">
                   🇪🇸 Spanish
                 </option>
-                <option value="German" className="bg-gray-800 text-white">
+                <option value="🇩🇪" className="bg-gray-800 text-white">
                   🇩🇪 German
                 </option>
-                <option value="Italian" className="bg-gray-800 text-white">
+                <option value="🇮🇹" className="bg-gray-800 text-white">
                   🇮🇹 Italian
                 </option>
-                <option value="Portuguese" className="bg-gray-800 text-white">
+                <option value="🇧🇷" className="bg-gray-800 text-white">
                   🇧🇷 Portuguese
                 </option>
                 <option value="Russian" className="bg-gray-800 text-white">
@@ -898,29 +1063,7 @@ const CreateMangaModal = () => {
             Add New Title (Part 3: Tagging)
           </h1>
           <div className="space-y-5">
-            {/* Content Rating */}
-            <div className="space-y-3">
-              <p className="text-lg font-semibold">
-                Content Rating (Selected:&nbsp;
-                {selectedContentRating
-                  ? selectedContentRating
-                  : "No Tag Selected"}
-                )
-              </p>
-
-              <div className="space-x-3">
-                {tagsByContentRating.map((tag: any, index: any) => (
-                  <button
-                    type="button"
-                    className={`px-2 inline-flex rounded-sm ${selectedContentRating === tag ? "bg-orange-500 " : "bg-gray-500"}`}
-                    key={index}
-                    onClick={() => handleSetSelectedCR(tag)} // Use tag directly here
-                  >
-                    {tag}
-                  </button>
-                ))}
-              </div>
-            </div>
+           
 
             {/* Origin */}
             <div className="space-y-3">
@@ -961,7 +1104,7 @@ const CreateMangaModal = () => {
                 {selectedFormats.length > 5 && (
                   <span className="text-gray-600">...</span>
                 )}
-                )
+                ) (Leave alone if unsure)
               </p>
 
               <div className="space-x-3">
@@ -1019,7 +1162,10 @@ const CreateMangaModal = () => {
                 Theme (Selected: &nbsp;{" "}
                 {selectedThemes.length > 0
                   ? selectedThemes.slice(0, 5).map((tag: any, index: any) => (
-                      <span className="text-sm text-gray-600 italic">
+                      <span
+                        className="text-sm text-gray-600 italic"
+                        key={index}
+                      >
                         {tag}
                         {index < 4 && ", "}
                       </span>
@@ -1089,7 +1235,7 @@ const CreateMangaModal = () => {
             onClick={() => handleSetCurrentPage("+")}
           >
             {/* {pending ? "Submitting" : "Done"} */}
-            Submit
+            {uploading ? "Uploading..." : "Submit"}
           </button>
         )}
       </div>

@@ -199,7 +199,7 @@ from manga_id and chapter_id, now to display all the manga panels of this chapte
     onChange={(e) => e.target.classList.remove("text-gray-400")}
   >
 
-14. To make each div on the same line if they come from mapping (use inline-flex):
+14. To make each div on the same line if they come from mapping (use  ):
 {Object.map((tag: any, index: any) => (
   <div
     className=" inline-flex"
@@ -372,3 +372,70 @@ setList((prevState) => {
           : null
       );
     };
+
+23. fetching data multple times from actions.ts:
+const [creatorsData, tagsData] = await Promise.all([
+        getCreatorsById(manga_id),
+        getTagsById(manga_id),
+      ]);
+
+24. If encounter error Property 'map' does not exist on type 'never'.ts on a ts file:
+create an interface first:
+interface Manga {
+  id: number;
+  title: string;
+  description: string;
+  cover_image_url: string;
+  view_counts: number;
+  // Include other fields as needed
+}
+
+then do this:
+  const [allMangas, setAllMangas] = useState<Manga[] | null>(null);
+
+25. Code to upload an image to cloudinary with conditions:
+const formData = new FormData();
+formData.append("file", image);
+formData.append("upload_preset", "ml_default");
+const folderName = `location_here`;
+formData.append("folder", folderName);
+
+const response = await axios.post(
+    `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`, // Replace with your Cloudinary cloud name
+        formData
+);
+const uploadedImageUrl = response.data.secure_url;
+
+26.
+The upsert function first checks if a record exists in the creators table with a name matching the given author.
+If the record exists, it updates the record using the empty update: {} statement (effectively leaving it unchanged in this case).
+If the record does not exist, it creates a new one using create: { name: author }.
+
+const authorPromises = authors.map(async (author) => {
+        const creator = await this.prisma.creators.upsert({
+          where: { name: author },
+          update: {},
+          create: { name: author },
+        });
+
+        return this.prisma.manga_creator.create({
+          data: {
+            manga_id: mangaId,
+            creator_id: creator.id,
+            role: 'author',
+          },
+        });
+      });
+
+27. add a record to a many-many table:
+const formatPromises = formats.map(async (format) => {
+        const tag = await this.prisma.tags.findUnique({
+          where: { name: format },
+        });
+        return this.prisma.manga_tag.create({
+          data: {
+            manga_id: mangaId,
+            tag_id: tag.id,
+          },
+        });
+      });

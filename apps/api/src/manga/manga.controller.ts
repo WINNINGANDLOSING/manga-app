@@ -44,22 +44,10 @@ export class MangaController {
     return this.mangaService.createNewManga(createMangaDto);
   }
 
-  @Roles("ADMIN")
+  @Roles('ADMIN')
   @Get('creators')
   async getAuthorsAll(@Request() req) {
     return this.mangaService.getAuthorsAll();
-  }
-
-  @Public()
-  @Get('creators/:id')
-  async getAuthors(@Param('id') id: string) {
-    return this.mangaService.getAuthors(+id);
-  }
-
-  @Public()
-  @Get('tags/:id')
-  async getTags(@Param('id') id: string) {
-    return this.mangaService.getTags(+id);
   }
 
   @Public()

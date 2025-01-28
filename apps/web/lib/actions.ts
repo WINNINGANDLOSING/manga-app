@@ -6,7 +6,12 @@ import { BACKEND_URL } from "./constants";
 import { authFetch } from "./authFetch";
 import exp from "constants";
 import { redirect } from "next/navigation";
-import { CreateMangaPage1Schema, FormState, FormStateManga, Role } from "./type";
+import {
+  CreateMangaPage1Schema,
+  FormState,
+  FormStateManga,
+  Role,
+} from "./type";
 
 /* 
 
@@ -54,6 +59,12 @@ export const getAllTags = async () => {
   return result;
 };
 
+export const getTagsById = async (mangaId: number) => {
+  const response = await authFetch(`${BACKEND_URL}/tag/${mangaId}`);
+  const result = await response.json();
+  return result;
+};
+
 export const addNewChapter = async (
   manga_id: string,
   latestChapter: number
@@ -83,9 +94,7 @@ export const getAllCreators = async () => {
 };
 
 export const getCreatorsById = async (manga_id: number) => {
-  const response = await fetch(
-    `http://localhost:7000/manga/creators/${manga_id}`
-  );
+  const response = await fetch(`http://localhost:7000/creators/${manga_id}`);
   const result = await response.json();
   const authors = result.filter((creator: any) => creator.role === "author");
   const artists = result.filter((creator: any) => creator.role === "artist");
@@ -94,12 +103,20 @@ export const getCreatorsById = async (manga_id: number) => {
 
 export const addNewManga = async (
   title: string,
+  alternative_titles: string[],
   description: string,
-
+  authors: string[],
+  artists: string[],
+  originalLanguage: string,
+  releaseYear: number,
+  content_rating: string,
+  origin: string,
+  formats: string[],
   genres: string[],
-  cover_image_url: string,
-  view_counts: 0,
-  status: string
+  themes: string[],
+  cover_image_url: string
+
+  // status: string
 ) => {
   const response = await authFetch(
     `http://localhost:7000/manga/createNewManga`,
@@ -111,11 +128,17 @@ export const addNewManga = async (
       body: JSON.stringify({
         title: title,
         description: description,
-
+        alternative_titles: alternative_titles,
+        authors: authors,
+        artists: artists,
+        originalLanguage: originalLanguage,
+        releaseYear: releaseYear,
+        content_rating: content_rating,
+        origin: origin,
+        formats: formats,
         genres: genres,
+        themes: themes,
         cover_image_url: cover_image_url,
-        view_counts: view_counts,
-        status: status,
       }),
     }
   );
@@ -128,45 +151,3 @@ export const checking = async () => {
   if (!session || !session.user) redirect("/auth/signin");
   if (session.user.role !== Role.ADMIN) redirect("/auth/signin");
 };
-
-
-
-export async function handleMangaPage1Submission(
-  state: FormStateManga,
-  formData: FormData
-): Promise<FormStateManga> {
-
-  const validationFields = CreateMangaPage1Schema.safeParse({
-    title: formData.get("title"),
-    coverImage: formData.get("coverImage"),
-    synopsis: formData.get("synopsis"),
-    alternateTitles:formData.get("alternateTitles") || "[]",
-  });
-
-  if (!validationFields.success) {
-    return {
-      error: validationFields.error.flatten().fieldErrors,
-    };
-  }
-
-  
-
-
-    const response = await fetch("/api/manga", {
-      method: "POST",
-      body: JSON.stringify(validationFields.data),
-      headers: { "Content-Type": "application/json" },
-    });
-
-   if (response.ok) {
-     
-     redirect("/auth/signin");
-   } else
-     return {
-       message:
-         response.status === 409
-           ? "The user is already existed!"
-           : response.statusText,
-     };
-  
-}

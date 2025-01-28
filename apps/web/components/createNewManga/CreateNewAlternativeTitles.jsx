@@ -115,7 +115,7 @@ const CreateNewAlternativeTitlesModal = ({ setAlternativeTitles, onClose }) => {
                 value="english"
                 className="bg-gray-800 text-base text-white"
               >
-                🇺🇸 English
+                🇬🇧 English
               </option>
               <option
                 value="chinese"

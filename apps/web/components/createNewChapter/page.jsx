@@ -77,25 +77,8 @@ const CreateChapterModal = ({ setIsOpen, mangaInfo, onSuccess }) => {
     setLoading(true);
     setError(null);
     try {
-      // const query = await fetch(
-      //   `http://localhost:7000/manga/createNewChapter`,
-      //   {
-      //     method: "POST",
-      //     headers: {
-      //       "Content-Type": "application/json",
-      //     },
-      //     body: JSON.stringify({
-      //       mangaId: manga_id,
-      //       chapterNumber: latestChapter + 1, // send this to the createChapterDto
-      //     }),
-      //   }
-      // );
-      // if (!query.ok) {
-      //   throw new Error("Failed to create chapter");
-      // }
 
-      // const response = await query.json();
-      const response1 = await addNewChapter(manga_id, latestChapter);
+      const response = await addNewChapter(manga_id, latestChapter);
       setSuccess(true);
     } catch (err) {
       console.error("Error", err);

@@ -68,60 +68,225 @@ export class MangaService {
     }
   }
 
+  // async createNewManga(createMangaDto: CreateMangaDto) {
+  //   try {
+  //     const {
+  //       title,
+  //       alternative_titles,
+  //       description,
+  //       authors,
+  //       artists,
+  //       originalLanguage,
+  //       releaseYear,
+  //       origin,
+  //       format,
+  //       genres,
+  //       themes,
+  //       cover_image_url,
+  //       status,
+  //     } = createMangaDto;
+
+  //     const manga = await this.prisma.mangas.create({
+  //       data: {
+  //         title: title,
+  //         description: description,
+  //         alternative_titles: alternative_titles,
+  //         cover_image_url: cover_image_url,
+  //         original_lan: originalLanguage,
+  //         release_year: releaseYear,
+  //       },
+  //     });
+
+  //   const mangaId = manga.id;
+
+  //     return await this.prisma.mangas.create({
+  //       data: {
+  //         title: title,
+  //         description: description,
+  //         alternative_titles: alternative_titles,
+  //         cover_image_url: cover_image_url,
+  //         original_lan: originalLanguage,
+  //         release_year: releaseYear,
+  //       },
+  //     });
+  //   } catch (error) {
+  //     console.error('Error creating new manga: ', error);
+  //     throw new Error('Failed to create new manga');
+  //   }
+  // }
   async createNewManga(createMangaDto: CreateMangaDto) {
     try {
       const {
         title,
-        description,
-        genres,
-        cover_image_url,
-        view_counts,
-        status,
         alternative_titles,
+        description,
+        authors, // Array of author names
+        artists, // Array of artist names
+        originalLanguage,
+        releaseYear,
+        content_rating,
+        origin,
+        formats,
+        genres,
+        themes,
+        cover_image_url,
       } = createMangaDto;
-      return await this.prisma.mangas.create({
+
+      // Create the manga entry
+      const manga = await this.prisma.mangas.create({
         data: {
-          title,
-          description,
-          genres,
-          cover_image_url,
-          view_counts,
-          status,
-          alternative_titles,
+          title: title,
+          description: description,
+          alternative_titles: alternative_titles,
+          cover_image_url: cover_image_url,
+          original_lan: originalLanguage,
+          release_year: releaseYear,
+          content_rating: content_rating,
         },
       });
+
+      const mangaId = manga.id;
+
+      // Create authors and artists in the manga_creator table
+      const authorPromises = authors.map(async (author) => {
+        const creator = await this.prisma.creators.upsert({
+          where: { name: author },
+          update: {},
+          create: { name: author },
+        });
+
+        return this.prisma.manga_creator.create({
+          data: {
+            manga_id: mangaId,
+            creator_id: creator.id,
+            role: 'author',
+          },
+        });
+      });
+
+      const artistPromises = artists.map(async (artist) => {
+        // Insert a new record into table creators if there is no existing record with the field 'name' is equal to artist, if there is, simply do nothing
+        const creator = await this.prisma.creators.upsert({
+          where: { name: artist },
+          update: {},
+          create: { name: artist },
+        });
+
+        return this.prisma.manga_creator.create({
+          data: {
+            manga_id: mangaId,
+            creator_id: creator.id,
+            role: 'artist',
+          },
+        });
+      });
+
+      // Create genres, themes, format, origin, content rating
+
+      // Content Rating
+      const contentRatingId = await this.prisma.tags.findUnique({
+        where: { name: content_rating },
+      });
+
+      if (contentRatingId) {
+        await this.prisma.manga_tag.create({
+          data: {
+            manga_id: mangaId,
+            tag_id: contentRatingId.id,
+          },
+        });
+      }
+
+      // Origin
+      const originTag = await this.prisma.tags.findUnique({
+        where: { name: origin },
+      });
+
+      if (originTag) {
+        await this.prisma.manga_tag.create({
+          data: {
+            manga_id: mangaId,
+            tag_id: originTag.id,
+          },
+        });
+      }
+
+      // Formats
+      const formatPromises = formats.map(async (format) => {
+        const tag = await this.prisma.tags.findUnique({
+          where: { name: format },
+        });
+        return this.prisma.manga_tag.create({
+          data: {
+            manga_id: mangaId,
+            tag_id: tag.id,
+          },
+        });
+      });
+
+      // Genres
+      const genrePromises = genres.map(async (genre) => {
+        const tag = await this.prisma.tags.findUnique({
+          where: { name: genre },
+        });
+        return this.prisma.manga_tag.create({
+          data: {
+            manga_id: mangaId,
+            tag_id: tag.id,
+          },
+        });
+      });
+
+      // Themes
+      const themePromises = themes.map(async (theme) => {
+        const tag = await this.prisma.tags.findUnique({
+          where: { name: theme },
+        });
+        return this.prisma.manga_tag.create({
+          data: {
+            manga_id: mangaId,
+            tag_id: tag.id,
+          },
+        });
+      });
+
+      // generic function, good to use, but
+      const processPromises = async (tags: string[], mangaId: number) => {
+        return Promise.all(
+          tags.map(async (tagName) => {
+            const tag = await this.prisma.tags.findUnique({
+              where: { name: tagName },
+            });
+            return this.prisma.manga_tag.create({
+              data: {
+                manga_id: mangaId,
+                tag_id: tag.id,
+              },
+            });
+          }),
+        );
+      };
+
+      // Wait for all authors and artists to be created
+      await Promise.all([
+        ...authorPromises,
+        ...artistPromises,
+        ...formatPromises,
+        ...genrePromises,
+        ...themePromises,
+      ]);
+
+      return manga;
     } catch (error) {
       console.error('Error creating new manga: ', error);
       throw new Error('Failed to create new manga');
     }
   }
 
-  async getAuthors(manga_id: number) {
-    return await this.prisma.manga_creator.findMany({
-      where: {
-        manga_id: manga_id,
-        role: { in: ['author', 'artist'] },
-      },
-      include: {
-        creators: true,
-      },
-    });
-  }
-
   async getAuthorsAll() {
     return await this.prisma.creators.findMany({});
   }
 
-  async getTags(manga_id: number) {
-    return await this.prisma.manga_tag.findMany({
-      where: {
-        manga_id: manga_id,
-      },
-      include: {
-        mangas: true,
-      },
-    });
-  }
   getHello(): string {
     return 'Hello World!';
   }

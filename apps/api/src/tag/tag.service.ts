@@ -11,7 +11,15 @@ export class TagService {
     return await this.prisma.tags.findMany({});
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} tag`;
+  async findOne(manga_id: number) {
+    return await this.prisma.manga_tag.findMany({
+      where: {
+        manga_id: manga_id,
+      },
+      include: {
+        mangas: true,
+        tags: true
+      },
+    });
   }
 }

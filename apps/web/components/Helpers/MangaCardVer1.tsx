@@ -22,6 +22,7 @@ export interface MangaCardProps {
 const MangaCardVer1 = ({ data }: MangaCardProps) => {
   //const { manga_1 } = globalContext();
   const latestChapter = data?.chapters?.length ? data.chapters.length : 0;
+  // const latest = data?.chapters?.length ? data.chapters.length: 0;
   return (
     <Link
       className="relative w-[10vw] h-[14vw] hover:cursor-pointer border-orange-500 border-[1px] rounded-sm "
@@ -43,7 +44,7 @@ const MangaCardVer1 = ({ data }: MangaCardProps) => {
           {data.title}
         </p>
         <p className="absolute text-[0.7vw] hover:text-blue-500 transition-all duration-500 ease-in-out bottom-0   font-semibold left-3">
-          Ch. {latestChapter}
+          {latestChapter === 0 ? "" : `Ch. ${latestChapter}`}
         </p>
       </div>
     </Link>

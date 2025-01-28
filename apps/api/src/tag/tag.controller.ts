@@ -24,8 +24,9 @@ export class TagController {
     return this.tagService.findAll();
   }
 
+  @Roles('ADMIN')
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.tagService.findOne(+id);
+  findOne(@Param('id') manga_id: number) {
+    return this.tagService.findOne(+manga_id);
   }
 }

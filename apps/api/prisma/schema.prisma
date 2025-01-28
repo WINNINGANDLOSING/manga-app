@@ -75,13 +75,15 @@ model mangas {
   id                 Int             @id @default(autoincrement())
   title              String          @db.VarChar(255)
   description        String?
-  genres             String[]
   cover_image_url    String          @default("BLANK")
   view_counts        Int?            @default(0)
   status             String          @default("Ongoing") @db.VarChar(50)
   created_at         DateTime?       @default(now()) @db.Timestamp(6)
-  alternative_titles String[]
   last_updated       DateTime?       @default(now()) @db.Timestamp(6)
+  alternative_titles Json?
+  original_lan       String?         @default("Japanese") @db.VarChar(255)
+  release_year       Int?            @default(2020)
+  content_rating     String          @default("Safe") @db.VarChar(255)
   chapters           chapters[]
   manga_creator      manga_creator[]
   manga_tag          manga_tag[]
@@ -107,7 +109,7 @@ model tags {
 
 model creators {
   id            Int             @id @default(autoincrement())
-  name          String          @db.VarChar(255)
+  name          String          @unique @db.VarChar(255)
   bio           String?         @default("")
   created_at    DateTime?       @default(now()) @db.Timestamp(6)
   manga_creator manga_creator[]

@@ -14,8 +14,16 @@ export class CreatorsService {
     return await this.prisma.creators.findMany({});
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} creator`;
+  async findOne(manga_id: number) {
+    return await this.prisma.manga_creator.findMany({
+      where: {
+        manga_id: manga_id,
+        role: { in: ['author', 'artist'] },
+      },
+      include: {
+        creators: true,
+      },
+    });
   }
 
   update(id: number, updateCreatorDto: UpdateCreatorDto) {

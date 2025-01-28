@@ -186,31 +186,14 @@ const AdminPage = () => {
                     <th className="p-3 w-1/6" style={{ width: "15%" }}>
                       Status
                     </th>
-                    <th className="p-3 w-1/2" style={{ width: "25%" }}>
-                      Genres
-                    </th>
+                   
                     <th className="p-3 w-1/3 " style={{ width: "15%" }}>
                       Actions
                     </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {/* <tr className="odd:bg-gray-100 hover:bg-gray-200">
-                    <td className="p-3">1</td>
-                    <td className="p-3">One Piece</td>
-                    <td className="p-3 text-green-500 font-semibold">
-                      Ongoing
-                    </td>
-                    <td className="p-3">Action, Adventure</td>
-                    <td className="p-3 space-x-3">
-                      <button className="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600">
-                        Edit
-                      </button>
-                      <button className="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600">
-                        Delete
-                      </button>
-                    </td>
-                  </tr> */}
+                
                   {paginatedMangas.length > 0 &&
                     paginatedMangas !== null &&
                     paginatedMangas.map((manga: any, index: any) => (
@@ -229,7 +212,7 @@ const AdminPage = () => {
                         >
                           {manga.status}
                         </td>
-                        <td>{manga.genres.join(", ") || "Not Specified"}</td>
+                        
                         <td className="p-3 space-x-3">
                           <button className="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600">
                             Edit
