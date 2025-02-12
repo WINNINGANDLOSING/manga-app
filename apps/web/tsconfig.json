@@ -23,6 +23,6 @@
     "components/createNewChapter/page.jsx",
     "public/data/ExportedData.js",
     "components/sidebar/page.jsx"
-, "app/testingRun/seeCreators/page.jsx", "components/createNewManga/page.tsx", "components/createNewManga/CreateNewSynopsisModal.jsx", "components/createNewManga/CreateNewAuthors.jsx"  ],
+, "app/testingRun/seeCreators/page.jsx", "components/createNewManga/page.tsx", "components/createNewManga/CreateNewSynopsisModal.jsx", "components/createNewManga/CreateNewAuthors.jsx", "components/createNewChapter/PanelPreview.jsx", "app/seeMangaByTag/page.tsx", "app/editManga/addNewTagsModal.jsx", "components/confirmMessage/ConfirmationModal.jsx"  ],
   "exclude": ["node_modules"]
 }

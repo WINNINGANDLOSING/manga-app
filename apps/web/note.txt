@@ -439,3 +439,48 @@ const formatPromises = formats.map(async (format) => {
           },
         });
       });
+
+28. To make the required tag work by preventing submitting when not having all required fields filled in, and if the submit button calls a custom function:
+in the <form>
+add this:
+onClick={(e) => e.stopPropagation()}
+        onSubmit={(e) => {
+          e.preventDefault(); // Prevent default submission
+          if (document.getElementById("field").value === "") {
+            return;
+          }
+          customer_fuction();
+        }}
+
+29. Display date with leading 0 in both day and month:
+{new Date(date_here).toLocaleDateString('en-GB', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                          })}
+
+30. Filter manga by tags:
+in manga.service:
+return await this.prisma.mangas.findMany({where: {
+        manga_tag: {
+          some: {
+            tags: {
+              name: tag
+            }
+          }
+        }
+      },
+})
+
+31.
+useEffect(() => {
+    if (altTitlesTemp && altTitlesTemp.length > 0) {
+      const newAltTitles = altTitlesTemp.map((title: any) => ({
+        flag: title.flag,
+        content: title.content,
+      }));
+      setAltTitles((prevState: any) => {
+        return [...prevState || [], ...newAltTitles];
+      });
+    }
+  }, [altTitlesTemp]);

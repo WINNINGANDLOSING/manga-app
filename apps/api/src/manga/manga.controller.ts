@@ -27,6 +27,18 @@ export class MangaController {
   }
 
   @Public()
+  @Get('tag/:tag')
+  async findByTag(@Param('tag') tag: string) {
+    return this.mangaService.findByTag(tag);
+  }
+
+  @Public()
+  @Get('creator/:creator')
+  async findByCreator(@Param('creator') creator: string) {
+    return this.mangaService.findByCreator(creator);
+  }
+
+  @Public()
   @Get()
   async findAll(@Request() req) {
     return this.mangaService.findAll();
@@ -45,9 +57,9 @@ export class MangaController {
   }
 
   @Roles('ADMIN')
-  @Get('creators')
-  async getAuthorsAll(@Request() req) {
-    return this.mangaService.getAuthorsAll();
+  @Post('editManga')
+  editManga(@Body() updateMangaDto: UpdateMangaDto) {
+    return this.mangaService.editManga(updateMangaDto);
   }
 
   @Public()

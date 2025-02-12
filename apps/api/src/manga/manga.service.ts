@@ -26,12 +26,49 @@ export class MangaService {
       where: {
         id: mangaId,
       },
+
       include: {
+        manga_tag: { include: { tags: true } },
+        manga_creator: { include: { creators: true } },
         chapters: {
           include: {
             pages: true,
           },
         },
+      },
+    });
+  }
+
+  async findByTag(tag: string) {
+    return await this.prisma.mangas.findMany({
+      where: {
+        manga_tag: {
+          some: {
+            tags: {
+              name: tag,
+            },
+          },
+        },
+      },
+      include: {
+        manga_tag: true,
+      },
+    });
+  }
+
+  async findByCreator(creator: string) {
+    return await this.prisma.mangas.findMany({
+      where: {
+        manga_creator: {
+          some: {
+            creators: {
+              name: creator,
+            },
+          },
+        },
+      },
+      include: {
+        manga_creator: true,
       },
     });
   }
@@ -280,6 +317,115 @@ export class MangaService {
     } catch (error) {
       console.error('Error creating new manga: ', error);
       throw new Error('Failed to create new manga');
+    }
+  }
+
+  async editManga(updateMangaDto: UpdateMangaDto) {
+    try {
+      const {
+        manga_id,
+        title,
+        alternative_titles,
+        description,
+        creators,
+        originalLanguage,
+        releaseYear,
+        content_rating,
+        tags,
+        cover_image_url,
+        status,
+      } = updateMangaDto;
+
+      // Update the manga entry
+      const updatedManga = await this.prisma.mangas.update({
+        where: { id: Number(manga_id) },
+        data: {
+          title,
+          description,
+          cover_image_url,
+          original_lan: originalLanguage,
+          release_year: releaseYear,
+          content_rating,
+          status,
+          alternative_titles,
+          last_updated: new Date().toISOString(),
+        },
+      });
+
+      const mangaId = updatedManga.id;
+
+      // Update authors and artists in the manga_creator table
+      // await this.prisma.manga_creator.deleteMany({
+      //   where: { manga_id: mangaId },
+      // });
+      await this.prisma.manga_creator.deleteMany({ where: { manga_id: mangaId } });
+
+      
+      const creatorPromises = creators?.map(async (author: any) => {
+        const creator = await this.prisma.creators.upsert({
+          where: { name: author.name },
+          update: {},
+          create: { name: author.name },
+        });
+
+        return this.prisma.manga_creator.create({
+          data: {
+            manga_id: mangaId,
+            creator_id: creator.id,
+            role: `${author.role}`,
+          },
+        });
+      });
+
+      // Update tags (content rating, origin, formats, genres, themes)
+      // deleting all tags associated with this manga first
+      await this.prisma.manga_tag.deleteMany({ where: { manga_id: mangaId } });
+
+      const tagPromises = tags?.map(async (tagName: any) => {
+        const tag = await this.prisma.tags.findUnique({
+          where: { name: tagName },
+        });
+        if (tag) {
+          return this.prisma.manga_tag.create({
+            data: {
+              manga_id: mangaId,
+              tag_id: tag.id,
+            },
+          });
+        }
+      });
+      // const processTags = async (tags: string[]) => {
+      //   return Promise.all(
+      //     tags.map(async (tagName) => {
+      //       const tag = await this.prisma.tags.findUnique({
+      //         where: { name: tagName },
+      //       });
+      //       if (tag) {
+      //         return this.prisma.manga_tag.create({
+      //           data: {
+      //             manga_id: mangaId,
+      //             tag_id: tag.id,
+      //           },
+      //         });
+      //       }
+      //     }),
+      //   );
+      // };
+
+      // await Promise.all([
+      //   processTags([content_rating, origin].filter(Boolean) as string[]),
+      //   processTags(formats ?? []),
+      //   processTags(genres ?? []),
+      //   processTags(themes ?? []),
+      //   ...(authorPromises ?? []),
+      //   ...(artistPromises ?? []),
+      // ]);
+
+      await Promise.all([creatorPromises, tagPromises]);
+      return updatedManga;
+    } catch (error) {
+      console.error('Error updating manga:', error);
+      throw new Error('Failed to update manga');
     }
   }
 

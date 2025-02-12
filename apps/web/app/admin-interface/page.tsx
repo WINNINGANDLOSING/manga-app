@@ -6,6 +6,8 @@ import CreateMangaModal from "@/components/createNewManga/page";
 import AdminSidebar from "@/components/sidebar/page";
 import React, { useEffect, useState } from "react";
 import { getAllManga, getAllTags, getAllUsers } from "@/lib/actions";
+import Link from "next/link";
+import CreateMangaModalAPI from "@/components/createNewMangaAPI/page";
 
 const AdminPage = () => {
   const router = useRouter();
@@ -15,7 +17,7 @@ const AdminPage = () => {
   //   const checkSession = async () => {
   //     try {
   //       const session = await getSession();
-        
+
   //       // Redirect if no session or the user is not an admin
   //       if (!session || !session.user || session?.user.role === "USER") {
   //         router.push("/publicPage");
@@ -40,7 +42,6 @@ const AdminPage = () => {
 
   const [mangas, setAllMangas] = useState<any[]>([]);
   const [users, setAllUsers] = useState<any[]>([]);
-  
 
   // wont work useState<>() because mangas.length is undefined
   const [currentTab, setCurrentTab] = useState("mangas");
@@ -91,15 +92,12 @@ const AdminPage = () => {
         ]);
         setAllMangas(mangaData);
         setAllUsers(userData);
-        
       } catch (error) {
         console.error("Error fetching data:", error);
       }
     };
     fetchData();
   }, []);
-
-  
 
   const paginatedMangas = mangas.slice(firstMangaIndex, lastMangaIndex);
   const paginatedUsers = users.slice(firstUserIndex, lastUserIndex);
@@ -114,8 +112,13 @@ const AdminPage = () => {
   Sidebar properties and actions
   */
 
-  const [currentSubTab, setCurrentSubTab] = useState("add-mangas");
+  const [currentSubTab, setCurrentSubTab] = useState("add-mangas-api");
 
+  useEffect(() => {
+    if (mangas && mangas.length > 0) {
+      console.log("mangas", typeof mangas[0].id);
+    }
+  }, [mangas]);
   return (
     <div className="min-h-screen text-white  p-5 bg-black">
       {/* Header */}
@@ -135,7 +138,7 @@ const AdminPage = () => {
         />
 
         {/* Main Panel */}
-        <section className="w-3/4 col-span-3 bg-gray-800 shadow-md p-5 text-wh rounded-md">
+        <section className="w-3/4 col-span-3 bg-gray-800 shadow-md p-5 h-fit text-wh rounded-md">
           {/*Dashboard (default tab)*/}
           {currentTab === "dashboard" && (
             <div className="grid grid-cols-3 gap-5 mb-5">
@@ -171,7 +174,9 @@ const AdminPage = () => {
           {currentTab === "mangas" && currentSubTab === "view-mangas" && (
             <div>
               <div className="flex justify-center  mb-5">
-                <h2 className="text-2xl font-semibold">Manage Mangas</h2>
+                <h1 className="text-xl bg-red-400 rounded-md shadow-md flex items-center p-3 justify-center font-semibold w-full">
+                  Manage Mangas
+                </h1>
               </div>
               {/* Manga Table */}
               <table className="w-full border-collapse ">
@@ -186,14 +191,13 @@ const AdminPage = () => {
                     <th className="p-3 w-1/6" style={{ width: "15%" }}>
                       Status
                     </th>
-                   
+
                     <th className="p-3 w-1/3 " style={{ width: "15%" }}>
                       Actions
                     </th>
                   </tr>
                 </thead>
                 <tbody>
-                
                   {paginatedMangas.length > 0 &&
                     paginatedMangas !== null &&
                     paginatedMangas.map((manga: any, index: any) => (
@@ -212,11 +216,19 @@ const AdminPage = () => {
                         >
                           {manga.status}
                         </td>
-                        
+
                         <td className="p-3 space-x-3">
-                          <button className="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600">
+                          <Link
+                            className="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600"
+                            href={{
+                              pathname: "/editManga",
+                              query: {
+                                manga_id: manga.id,
+                              },
+                            }}
+                          >
                             Edit
-                          </button>
+                          </Link>
                           <button className="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600">
                             Delete
                           </button>
@@ -230,7 +242,7 @@ const AdminPage = () => {
                 <button
                   onClick={() => handlePrevious("mangas")}
                   disabled={currentPage["mangas"] === 1}
-                  className={`px-4 py-2 rounded-md w-[5vw] ${
+                  className={`px-4 py-2 rounded-md text-sm ${
                     currentPage["mangas"] === 1
                       ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                       : "bg-blue-500 text-white hover:bg-blue-600"
@@ -244,7 +256,7 @@ const AdminPage = () => {
                 <button
                   onClick={() => handleNext("mangas")}
                   disabled={currentPage["mangas"] === totalPagesManga}
-                  className={`px-4 py-2 rounded-md w-[5vw] ${
+                  className={`px-4 py-2 rounded-md text-sm ${
                     currentPage["mangas"] === totalPagesManga
                       ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                       : "bg-blue-500 text-white hover:bg-blue-600"
@@ -259,18 +271,24 @@ const AdminPage = () => {
           {currentTab === "mangas" && currentSubTab === "add-mangas" && (
             <CreateMangaModal />
           )}
+          {/* Add New Manga (Using MangaDex Api) */}
+          {currentTab === "mangas" && currentSubTab === "add-mangas-api" && (
+            <CreateMangaModalAPI />
+          )}
 
           {/* Users Section (To be added)*/}
           {currentTab === "users" && (
             <div>
-              <div className="flex justify-between items-center mb-5">
-                <h2 className="text-2xl font-semibold">Manage Users</h2>
-                <button
+              <div className="flex flex-col justify-between items-center mb-5">
+                <h1 className="text-xl bg-red-400 rounded-md shadow-md flex items-center p-3 justify-center font-semibold w-full">
+                  Manage Users
+                </h1>
+                {/* <button
                   className="bg-green-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-green-600"
                   onClick={() => SetIsOpen(true)}
                 >
                   Add Users
-                </button>
+                </button> */}
               </div>
               {/* Manga Table */}
               <table className="w-full border-collapse table-fixed">
@@ -307,7 +325,7 @@ const AdminPage = () => {
                 <button
                   onClick={() => handlePrevious("users")}
                   disabled={currentPage["users"] === 1}
-                  className={`px-4 py-2 rounded-md w-[5vw] ${
+                  className={`px-4 py-2 rounded-md text-sm ${
                     currentPage["users"] === 1
                       ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                       : "bg-blue-500 text-white hover:bg-blue-600"
@@ -321,7 +339,7 @@ const AdminPage = () => {
                 <button
                   onClick={() => handleNext("users")}
                   disabled={currentPage["users"] === totalPagesUsers}
-                  className={`px-4 py-2 rounded-md w-[5vw] ${
+                  className={`px-4 py-2 rounded-md text-sm ${
                     currentPage["users"] === totalPagesUsers
                       ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                       : "bg-blue-500 text-white hover:bg-blue-600"

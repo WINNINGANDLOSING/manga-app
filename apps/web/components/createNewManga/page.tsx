@@ -57,7 +57,7 @@ const CreateMangaModal = () => {
     }
   }, [lastMangaIndex]);
   // Linh Tinh
-  const refreshPage = () => {
+   const refreshPage = () => {
     window.location.reload();
   };
   const [allTags, setAllTags] = useState<string[]>([]);
@@ -243,14 +243,12 @@ const CreateMangaModal = () => {
     };
 
     const validatePageThree = () => {
-      
       updateErrorList(
         "selected-origin",
         selectedOrigin === "DEFAULT"
           ? "You have not chosen any tag belong to Category 'Origin'"
           : null
       );
-    
 
       updateErrorList(
         "selected-genres",
@@ -576,7 +574,6 @@ const CreateMangaModal = () => {
   // }, [selectedAuthors]);
 
   // Page 3
-  
 
   const [selectedOrigin, setSelectedOrigin] = useState("");
   const handleSetSelectedOrigin = (tag: string) => {
@@ -585,6 +582,9 @@ const CreateMangaModal = () => {
 
   const [selectedFormats, setSelectedFormats] = useState<string[]>([]);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  useEffect(() => {
+    console.log("genres", selectedGenres);
+  }, [selectedGenres]);
   const [selectedThemes, setSelectedThemes] = useState<string[]>([]);
 
   // Select themes and genres, based on type, if 0 then themes, else then genres
@@ -960,12 +960,12 @@ const CreateMangaModal = () => {
                 <option value="Ecchi" className="bg-gray-800 text-white">
                   Ecchi
                 </option>
-                <option value="Porno" className="bg-gray-800 text-white">
-                  Pornographic
+                <option value="Nsfw" className="bg-gray-800 text-white">
+                  NSFW
                 </option>
               </select>
               <p className="text-sm font-normal text-gray-400 leading-[0.5px]">
-                Can be either Safe, Suggestive, Ecchi or Pornographic.
+                Can be either Safe, Suggestive, Ecchi or NSFW.
               </p>
             </div>
             <div className="space-y-3 w-1/2">
@@ -1063,8 +1063,6 @@ const CreateMangaModal = () => {
             Add New Title (Part 3: Tagging)
           </h1>
           <div className="space-y-5">
-           
-
             {/* Origin */}
             <div className="space-y-3">
               <p className="text-lg font-semibold">

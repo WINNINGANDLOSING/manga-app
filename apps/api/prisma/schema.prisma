@@ -67,6 +67,7 @@ model chapters {
   chapter_number Decimal?  @db.Decimal
   uploaded_date  DateTime? @default(now()) @db.Timestamp(6)
   chapter_name   String?
+  volume_number  Int?
   mangas         mangas    @relation(fields: [manga_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   pages          pages[]
 }

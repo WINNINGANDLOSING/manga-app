@@ -131,7 +131,7 @@ const MangaDetail = ({
             : ""
   }`}
                 >
-                  {mangaInfo.content_rating}
+                  {mangaInfo.content_rating.toUpperCase()}
                 </span>
               </p>
             </div>
@@ -149,7 +149,7 @@ const MangaDetail = ({
                   {mangaInfo.original_lan}
                 </p>
               </div>
-              <div className="flex flex-col space-y-5 px-10 py-3 text-2xl">
+              <div className="flex flex-col space-y-5 px-10 py-3 text-xl">
                 <div className="flex flex-col gap-2">
                   {/* Status */}
                   <div className="flex font-semibold">
@@ -173,7 +173,7 @@ const MangaDetail = ({
                     <div className="inline-flex space-x-3">
                       {/* {mangaInfo.alternative_titles.join("; ") ||
                         "Not Specified"} */}
-                      {mangaInfo.alternative_titles.map(
+                      {mangaInfo?.alternative_titles?.map(
                         (title: any, index: any) => (
                           <p className="" key={index}>
                             {title.flag} {title.content}
@@ -190,12 +190,19 @@ const MangaDetail = ({
 
                     <ul className="space-x-3">
                       {authors.map((author: any, index: number) => (
-                        <li
+                        <Link
                           key={index}
-                          className="inline-flex bg-gray-400 rounded-full px-3 py-1 text-base text-white hover:cursor-pointer font-bold hover:text-black transition-all duration-500"
+                          className="inline-flex bg-gray-400 rounded-full px-2 py-1 text-xs text-white hover:cursor-pointer font-bold hover:text-black transition-all duration-500"
+                          href={{
+                            pathname: "/seeMangaByTag",
+                            query: {
+                              type: "creator",
+                              tag: author,
+                            },
+                          }}
                         >
                           {author}
-                        </li>
+                        </Link>
                       ))}
                     </ul>
                   </div>
@@ -206,12 +213,19 @@ const MangaDetail = ({
 
                     <ul className="space-x-3">
                       {artists.map((artist: any, index: number) => (
-                        <li
+                        <Link
                           key={index}
-                          className="inline-flex bg-gray-400 rounded-full px-3 py-1 text-base text-white hover:cursor-pointer font-bold hover:text-black transition-all duration-500"
+                          className="inline-flex bg-gray-400 rounded-full px-2 py-1 text-xs text-white hover:cursor-pointer font-bold hover:text-black transition-all duration-500"
+                          href={{
+                            pathname: "/seeMangaByTag",
+                            query: {
+                              type: "creator",
+                              tag: artist,
+                            },
+                          }}
                         >
                           {artist}
-                        </li>
+                        </Link>
                       ))}
                     </ul>
                   </div>
@@ -219,29 +233,43 @@ const MangaDetail = ({
                   {/* Genres */}
                   <div className="flex">
                     <p className="font-semibold">Genres(s):&nbsp;</p>
-                    <div className="flex space-x-2">
+                    <ul className=" space-x-2">
                       {genres.map((genre: any, index: number) => (
-                        <div
+                        <Link
                           key={index}
-                          className="bg-gray-400 rounded-full px-3 py-1 text-base text-white hover:cursor-pointer font-bold hover:text-black transition-all duration-500"
+                          className="inline-flex bg-gray-400 rounded-full px-2 py-1 text-xs text-white hover:cursor-pointer font-bold hover:text-black transition-all duration-500"
+                          href={{
+                            pathname: "/seeMangaByTag",
+                            query: {
+                              type: "tag",
+                              tag: genre.tags.name,
+                            },
+                          }}
                         >
                           {genre.tags.name}
-                        </div>
+                        </Link>
                       ))}
-                    </div>
+                    </ul>
                   </div>
 
                   {/* Themes */}
                   <div className="flex">
-                    <p className="font-semibold">Themes(s):&nbsp;</p>
-                    <div className="flex space-x-2">
+                    <p className="font-semibold">Theme(s):&nbsp;</p>
+                    <div className=" space-x-2">
                       {themes.map((theme: any, index: number) => (
-                        <div
+                        <Link
                           key={index}
-                          className="bg-gray-400 rounded-full px-3 py-1 text-base text-white hover:cursor-pointer font-bold hover:text-black transition-all duration-500"
+                          className="inline-flex bg-gray-400 rounded-full px-2 py-1 text-xs text-white hover:cursor-pointer font-bold hover:text-black transition-all duration-500"
+                          href={{
+                            pathname: "/seeMangaByTag",
+                            query: {
+                              type: "tag",
+                              tag: theme.tags.name,
+                            },
+                          }}
                         >
                           {theme.tags.name}
-                        </div>
+                        </Link>
                       ))}
                     </div>
                   </div>
@@ -281,19 +309,19 @@ const MangaDetail = ({
 
             {/* List of All Chapters */}
             <div className="flex flex-col p-3 border-opacity-50 shadow-md rounded-md py-8 ">
-              <div className="flex justify-between w-full border-b-2 border-b-gray-300">
+              <div className="flex items-center space-x-3  w-full border-b-2 border-b-gray-300">
                 <p className=" text-xl py-1 font-semibold font-serif text-orange-500">
                   CHAPTERS
                 </p>
                 <button
                   onClick={() => setIsModalOpen(true)}
-                  className="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none"
+                  className="bg-green-500 hover:bg-green-600 hover:scale-125 duration-200 px-2 ease-in-out transition-all text-white  text-[0.5vw] h-[1vw] rounded-sm focus:outline-none"
                 >
-                  Upload New Chapter
+                  Upload Chapter
                 </button>
               </div>
               {mangaInfo.chapters ? (
-                <ul>
+                <ul className="overflow-y-scroll scrollbar max-h-[40vh]">
                   {mangaInfo.chapters.map((chapter: any, index: any) => (
                     <li
                       className="flex items-center justify-between border-b-2 border-b-gray-200 py-4  hover:bg-gray-100"
@@ -313,9 +341,22 @@ const MangaDetail = ({
                           Chapter {chapter.chapter_number}
                         </Link>
                       </div>
-                      <p className="text-sm text-gray-500">
-                        {new Date(chapter.uploaded_date).toLocaleDateString()}
-                      </p>
+                      <div className="flex space-x-2 text-gray-500 justify-center items-center">
+                        <p className="text-sm  text-right">
+                          Volume {chapter.volume_number}
+                        </p>
+                        <p>|</p>
+                        <p className="text-sm text-left">
+                          {new Date(chapter.uploaded_date).toLocaleDateString(
+                            "en-US",
+                            {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                            }
+                          )}
+                        </p>
+                      </div>
                     </li>
                   ))}
                 </ul>

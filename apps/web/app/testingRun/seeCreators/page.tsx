@@ -9,13 +9,14 @@ const Page = () => {
   const manga_id = 10009;
 
   useEffect(() => {
-    const fetchingCreator = async () => {
+    const fetchingCreators = async () => {
       const data = await getAllCreators();
-      // const { authors, artists } = data;
-      setAuthors(data);
-      // setArtists(artists.map((artist: any) => artist.creators.name));
+      const formatted_data = data.sort((a: any, b: any) =>
+        a.name.localeCompare(b.name)
+      );
+      setAuthors(formatted_data);
     };
-    fetchingCreator();
+    fetchingCreators();
   }, []);
 
   // useEffect(() => {

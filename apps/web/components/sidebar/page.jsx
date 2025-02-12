@@ -49,7 +49,7 @@ const AdminSidebar = ({ currentTab, setTab, subTab, setSubTab  }) => {
   };
 
   return (
-    <nav className="w-1/4 bg-gray-800 text-white font-semibold shadow-md p-5 rounded-md max-h-[25vw] min-h-[20vw]">
+    <nav className="w-1/4 bg-gray-800 text-white font-semibold shadow-md p-5 rounded-md min-h-[20vw]">
       <ul className="space-y-4">
         <li
           className={`p-3 rounded-md cursor-pointer ${
@@ -116,6 +116,17 @@ const AdminSidebar = ({ currentTab, setTab, subTab, setSubTab  }) => {
                 onClick={() => handleSetSubTab("add-mangas")}
               >
                 Add New Manga
+              </div>
+
+              <div
+                className={`px-3 py-2 rounded-md cursor-pointer  w-[13vw] ${
+                  currentTab === "mangas" && subTab === "add-mangas-api"
+                    ? "bg-orange-300 text-black font-semibold"
+                    : "hover:bg-orange-300 hover:text-black"
+                }`}
+                onClick={() => handleSetSubTab("add-mangas-api")}
+              >
+                Add New Manga (MangaDex API)
               </div>
             </div>
           )}

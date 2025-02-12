@@ -12,8 +12,22 @@ import {
   FormStateManga,
   Role,
 } from "./type";
+import axios from "axios";
 
+interface AlternativeTitle {
+  flag: string;
+  content: string;
+}
+interface Creator {
+  id: number;
+  name: string;
+}
+interface Creator1 {
+  name: any;
+  role: any;
+}
 /* 
+
 
 
 Bearer token format: The Authorization header is generally used for sending credentials in HTTP requests. The common format when using JWT (JSON Web Tokens) is:
@@ -43,6 +57,23 @@ export const getProfile = async () => {
 export const getAllManga = async () => {
   //const checking = await authFetch(`${BACKEND_URL}/auth/protected`);
   const response = await authFetch(`${BACKEND_URL}/manga`);
+  const result = await response.json();
+  return result;
+};
+export const getMangaById = async (id: string) => {
+  const response = await authFetch(`${BACKEND_URL}/manga/${id}`);
+  const result = await response.json();
+  return result;
+};
+
+export const getMangaByTag = async (tag: string) => {
+  const response = await authFetch(`${BACKEND_URL}/manga/tag/${tag}`);
+  const result = await response.json();
+  return result;
+};
+
+export const getMangaByCreator = async (creator: string) => {
+  const response = await authFetch(`${BACKEND_URL}/manga/creator/${creator}`);
   const result = await response.json();
   return result;
 };
@@ -146,8 +177,95 @@ export const addNewManga = async (
   return result;
 };
 
+export const editManga = async (
+  manga_id: string,
+  title: string,
+  alternative_titles: AlternativeTitle[],
+  description: string,
+  creators: Creator1[],
+  originalLanguage: string | undefined,
+  releaseYear: number,
+  content_rating: string,
+  tags: string[],
+  cover_image_url: string,
+  status: string
+) => {
+  const response = await authFetch(`http://localhost:7000/manga/editManga`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      manga_id: manga_id,
+      title: title,
+      description: description,
+      alternative_titles: alternative_titles,
+      creators: creators,
+      originalLanguage: originalLanguage,
+      releaseYear: releaseYear,
+      content_rating: content_rating,
+      tags: tags,
+      cover_image_url: cover_image_url,
+      status: status,
+    }),
+  });
+  const result = await response.json();
+  return result;
+};
+
 export const checking = async () => {
   const session = await getSession();
   if (!session || !session.user) redirect("/auth/signin");
   if (session.user.role !== Role.ADMIN) redirect("/auth/signin");
 };
+
+export const searchMangaDex = async (title: string) => {
+  const axios = require("axios");
+
+  const baseURL = "http://api.mangadex.org";
+
+  const order = {
+    relevance: "desc",
+  };
+  const finalOrderQuery: Record<string, string> = {};
+
+  Object.entries(order).forEach(([key, value]) => {
+    finalOrderQuery[`order[${key}]`] = value;
+  });
+  const response = await axios({
+    method: "GET",
+    url: `${baseURL}/manga`,
+    params: {
+      title: title,
+      ...finalOrderQuery,
+    },
+  });
+
+  const res = response.data.data;
+
+  return res;
+};
+
+async function getCoverImage(data: any) {
+  try {
+    const mangaId = data.data.id;
+    const coverRelationship = data.data.relationships.find(
+      (rel: any) => rel.type === "cover_art"
+    );
+
+    if (!coverRelationship) {
+      throw new Error("Cover art not found in relationships.");
+    }
+
+    const coverId = coverRelationship.id;
+    const coverResponse = await axios.get(
+      `https://api.mangadex.org/cover/${coverId}`
+    );
+    const fileName = coverResponse.data.data.attributes.fileName;
+
+    return `https://uploads.mangadex.org/covers/${mangaId}/${fileName}`;
+  } catch (error) {
+    console.error("Error fetching cover image:", error);
+    return null;
+  }
+}
