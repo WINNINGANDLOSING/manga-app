@@ -56,6 +56,12 @@ export class MangaController {
     return this.mangaService.createNewManga(createMangaDto);
   }
 
+  // @Roles('ADMIN')
+  // @Post('createNewMangaVer2')
+  // createMangaVer2(@Body() createMangaDto: CreateMangaDto) {
+  //   return this.mangaService.createNewManga_ver2(createMangaDto);
+  // }
+
   @Roles('ADMIN')
   @Post('editManga')
   editManga(@Body() updateMangaDto: UpdateMangaDto) {

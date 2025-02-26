@@ -49,7 +49,7 @@ const AdminSidebar = ({ currentTab, setTab, subTab, setSubTab  }) => {
   };
 
   return (
-    <nav className="w-1/4 bg-gray-800 text-white font-semibold shadow-md p-5 rounded-md min-h-[20vw]">
+    <nav className="w-1/4 bg-gray-800 text-white font-semibold shadow-md p-5 rounded-md  h-fit">
       <ul className="space-y-4">
         <li
           className={`p-3 rounded-md cursor-pointer ${

@@ -52,6 +52,11 @@ export class CreateMangaDto {
   @IsString({ each: true }) // Ensures each element in the array is a string
   themes?: string[];
 
+  // @IsOptional()
+  @IsArray()
+  @IsString({ each: true }) // Ensures each element in the array is a string
+  tags?: string[];
+
   @IsOptional()
   @IsString()
   cover_image_url?: string;

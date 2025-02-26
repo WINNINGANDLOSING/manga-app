@@ -57,7 +57,7 @@ const CreateMangaModal = () => {
     }
   }, [lastMangaIndex]);
   // Linh Tinh
-   const refreshPage = () => {
+  const refreshPage = () => {
     window.location.reload();
   };
   const [allTags, setAllTags] = useState<string[]>([]);
@@ -67,7 +67,7 @@ const CreateMangaModal = () => {
   const [tagsByGenres, setTagsByGenres] = useState<string[]>([]);
   const [tagsByThemes, setTagsByThemes] = useState<string[]>([]);
 
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(3);
   const totalPages = 4;
   const [errorList, setErrorList] = useState<string[]>([]);
 
@@ -105,36 +105,36 @@ const CreateMangaModal = () => {
 
   const handleAddingNewManga = async (
     title: string,
-    alternative_titles: string[],
-    description: string,
-    authors: string[],
-    artists: string[],
-    originalLanguage: string,
-    releaseYear: number,
-    content_rating: string,
-    origin: string,
-    formats: string[],
-    genres: string[],
-    themes: string[],
-    cover_image_url: string
+    // alternative_titles: string[],
+    // description: string,
+    // authors: string[],
+    // artists: string[],
+    // originalLanguage: string,
+    // releaseYear: number,
+    // content_rating: string,
+    // origin: string,
+    // formats: string[],
+    // genres: string[],
+    // themes: string[],
+    // cover_image_url: string
   ) => {
     setLoading(true);
     setError(null);
     try {
       const response = await addNewManga(
         title,
-        alternative_titles,
-        description,
-        authors,
-        artists,
-        originalLanguage,
-        releaseYear,
-        content_rating,
-        origin,
-        formats,
-        genres,
-        themes,
-        cover_image_url
+        // alternative_titles,
+        // description,
+        // authors,
+        // artists,
+        // originalLanguage,
+        // releaseYear,
+        // content_rating,
+        // origin,
+        // formats,
+        // genres,
+        // themes,
+        // cover_image_url
       );
       setSuccess(true);
     } catch (err) {
@@ -215,7 +215,7 @@ const CreateMangaModal = () => {
       );
       updateErrorList(
         "synopsis",
-        synopsis === null ? "Missing Field: Synopsis" : null
+        synopsis === "" ? "Missing Field: Synopsis" : null
       );
     };
 
@@ -325,21 +325,21 @@ const CreateMangaModal = () => {
             const bg_url = await handleAddingCoverImage(coverImage);
             await handleAddingNewManga(
               title,
-              alternateTitles,
-              synopsis,
-              selectedAuthors,
-              selectedArtists,
-              originalLan,
-              releaseYear,
-              contentRating,
-              selectedOrigin,
-              selectedFormats,
-              selectedGenres,
-              selectedThemes,
-              bg_url
+              // alternateTitles,
+              // synopsis,
+              // selectedAuthors,
+              // selectedArtists,
+              // originalLan,
+              // releaseYear,
+              // contentRating,
+              // selectedOrigin,
+              // selectedFormats,
+              // selectedGenres,
+              // selectedThemes,
+              // bg_url
             );
 
-            alert("Images uploaded and chapter created successfully!");
+            alert("New manga created successfully!");
             refreshPage();
           } catch (err) {
             console.log("ERROR");
@@ -493,6 +493,7 @@ const CreateMangaModal = () => {
   const [title, setTitle] = useState<string>("");
   useEffect(() => {
     console.log("title", title);
+    console.log('type of', typeof(title))
   }, [title]);
   const [alternateTitles, setAlternateTitles] = useState<string[]>([]);
   useEffect(() => {
@@ -506,6 +507,8 @@ const CreateMangaModal = () => {
     const file = e.target.files?.[0];
     setCoverImage(file);
   };
+
+  useEffect(() => {console.log("image", coverImage)}, [coverImage])
 
   const handleImageRemove = () => {
     setCoverImage(null);
@@ -709,14 +712,14 @@ const CreateMangaModal = () => {
                   onChange={handleImageChange}
                   className="opacity-0 absolute inset-0 hover:cursor-pointer left-0 flex items-center justify-center  bg-red-800 text-gray-300 w-full "
                 ></input>
-                {coverImage === null && (
+                {/* {coverImage === null && ( */}
                   <div className="  flex self-center pl-5 w-full ">
                     <p className="w-2/12 items-center flex">Select File</p>
                     <p className="w-10/12 bg-gray-500 items-center flex pl-3 py-4">
                       No File Chosen
                     </p>
                   </div>
-                )}
+                {/* )} */}
               </div>
             )}
             {coverImage && coverImage !== null && (
@@ -938,7 +941,7 @@ const CreateMangaModal = () => {
                 id="content-rating"
                 name="content-rating"
                 value={contentRating} // Bind to the state
-                className="add-manga-default-form text-gray-400"
+                className="add-manga-default-form text-gray-400 min-h-[3rem]"
                 onChange={(e) => {
                   setContentRating(e.target.value); // Update state when value changes
                   e.target.classList.remove("text-gray-400");
@@ -947,7 +950,7 @@ const CreateMangaModal = () => {
                 <option
                   value="DEFAULT"
                   disabled
-                  className="bg-gray-800 text-gray-400"
+                  className="bg-gray-800 text-gray-400 "
                 >
                   Select Content Rating
                 </option>
@@ -979,7 +982,7 @@ const CreateMangaModal = () => {
                 name="original-language"
                 required
                 value={originalLan} // Bind to the state
-                className="add-manga-default-form text-gray-400"
+                className="add-manga-default-form text-gray-400 min-h-[3rem]"
                 onChange={(e) => {
                   setOriginalLan(e.target.value); // Update state when value changes
                   e.target.classList.remove("text-gray-400");
@@ -1045,7 +1048,7 @@ const CreateMangaModal = () => {
               defaultValue={2020}
               id="year"
               name="year"
-              className="add-manga-default-form w-full"
+              className="add-manga-default-form w-full min-h-[3rem]"
               onChange={(e) => setReleaseYear(Number(e.target.value))}
             />
             <p className="text-sm font-normal text-gray-400 leading-[0.5px]">

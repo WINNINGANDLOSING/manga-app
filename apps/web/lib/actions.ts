@@ -132,6 +132,51 @@ export const getCreatorsById = async (manga_id: number) => {
   return { authors, artists };
 };
 
+// export const addNewManga = async (
+//   title: string,
+//   alternative_titles: string[],
+//   description: string,
+//   authors: string[],
+//   artists: string[],
+//   originalLanguage: string,
+//   releaseYear: number,
+//   content_rating: string,
+//   origin: string,
+//   formats: string[],
+//   genres: string[],
+//   themes: string[],
+//   cover_image_url: string
+
+//   // status: string
+// ) => {
+//   const response = await authFetch(
+//     `http://localhost:7000/manga/createNewManga`,
+//     {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/json",
+//       },
+//       body: JSON.stringify({
+//         title: title,
+//         description: description,
+//         alternative_titles: alternative_titles,
+//         authors: authors,
+//         artists: artists,
+//         originalLanguage: originalLanguage,
+//         releaseYear: releaseYear,
+//         content_rating: content_rating,
+//         origin: origin,
+//         formats: formats,
+//         genres: genres,
+//         themes: themes,
+//         cover_image_url: cover_image_url,
+//       }),
+//     }
+//   );
+//   const result = await response.json();
+//   return result;
+// };
+
 export const addNewManga = async (
   title: string,
   alternative_titles: string[],
@@ -141,13 +186,9 @@ export const addNewManga = async (
   originalLanguage: string,
   releaseYear: number,
   content_rating: string,
-  origin: string,
-  formats: string[],
-  genres: string[],
-  themes: string[],
+  tags: string[],
   cover_image_url: string
 
-  // status: string
 ) => {
   const response = await authFetch(
     `http://localhost:7000/manga/createNewManga`,
@@ -158,17 +199,14 @@ export const addNewManga = async (
       },
       body: JSON.stringify({
         title: title,
-        description: description,
         alternative_titles: alternative_titles,
+        description: description,
         authors: authors,
         artists: artists,
         originalLanguage: originalLanguage,
         releaseYear: releaseYear,
         content_rating: content_rating,
-        origin: origin,
-        formats: formats,
-        genres: genres,
-        themes: themes,
+        tags: tags,
         cover_image_url: cover_image_url,
       }),
     }
@@ -176,6 +214,7 @@ export const addNewManga = async (
   const result = await response.json();
   return result;
 };
+
 
 export const editManga = async (
   manga_id: string,
@@ -246,10 +285,10 @@ export const searchMangaDex = async (title: string) => {
   return res;
 };
 
-async function getCoverImage(data: any) {
+export const getCoverImageMangaDex = async (data: any) => {
   try {
-    const mangaId = data.data.id;
-    const coverRelationship = data.data.relationships.find(
+    const mangaId = data.id;
+    const coverRelationship = data.relationships.find(
       (rel: any) => rel.type === "cover_art"
     );
 
@@ -262,10 +301,46 @@ async function getCoverImage(data: any) {
       `https://api.mangadex.org/cover/${coverId}`
     );
     const fileName = coverResponse.data.data.attributes.fileName;
-
     return `https://uploads.mangadex.org/covers/${mangaId}/${fileName}`;
   } catch (error) {
     console.error("Error fetching cover image:", error);
     return null;
   }
-}
+};
+
+export const getCreatorsMangaDex = async (data: any) => {
+  try {
+    const authorList = data.relationships.filter(
+      (rel: any) => rel.type === "author"
+    );
+    const artistList = data.relationships.filter(
+      (rel: any) => rel.type === "artist"
+    );
+
+    //const mangaId = data.id;
+
+    const authorPromises = authorList.map((author: any) =>
+      axios.get(`https://api.mangadex.org/author/${author.id}`)
+    );
+    const artistPromises = artistList.map((artist: any) =>
+      axios.get(`https://api.mangadex.org/author/${artist.id}`)
+    );
+    const authorResponses = await Promise.all(authorPromises);
+    const artistResponses = await Promise.all(artistPromises);
+    
+    const authorNames = authorResponses.map(
+      (res) => res.data.data.attributes.name
+    );
+
+    const artistNames = artistResponses.map(
+      (res) => res.data.data.attributes.name
+    );
+    return {
+      authorNames,
+      artistNames,
+    };
+  } catch (err) {
+    console.error("Error fetching creators:", err);
+    return { authorName: null, artistName: null }; // Return a fallback object
+  }
+};

@@ -484,3 +484,9 @@ useEffect(() => {
       });
     }
   }, [altTitlesTemp]);
+
+32. Create a kinda similar dictionary like in python:
+const var: Record<string, string> = {
+  key1: "",
+  key2: "",
+}

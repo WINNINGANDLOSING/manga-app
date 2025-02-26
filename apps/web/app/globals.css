@@ -108,7 +108,7 @@ input[type=number] {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh; /* Full viewport height */
+  ; /* Full viewport height */
   /* background-color: #1a1a1a; /* Dark background for contrast */
 }
 

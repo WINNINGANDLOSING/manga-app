@@ -170,7 +170,7 @@ const MangaDetail = ({
                   {/* Alternative Titles */}
                   <div className="flex">
                     <p className="font-semibold">Alternative Titles:&nbsp;</p>
-                    <div className="inline-flex space-x-3">
+                    <div className="flex flex-col ">
                       {/* {mangaInfo.alternative_titles.join("; ") ||
                         "Not Specified"} */}
                       {mangaInfo?.alternative_titles?.map(
